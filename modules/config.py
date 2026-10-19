@@ -74,15 +74,14 @@ class PreprocessingConfig:
 class TraditionalFeatureConfig:
     """Controls traditional feature extraction (BoW, TF-IDF, n-grams).
 
-    The extractor produces a dense numpy array and saves it to
-    `features_dir` so that the shared `Classifier` can consume it
-    identically to modern embeddings.
+    The extractor produces a sparse feature matrix. Use `npz` to save it
+    without densifying, or `npy`/`h5` for dense storage.
 
     Implementation Guide:
     - `feature_type`: One of 'bow', 'tfidf', 'ngram'.
     - `ngram_range`: Tuple for n-gram range, e.g. (1, 1) for unigrams, (1, 2) for uni+bigrams.
     - `max_features`: Maximum number of features for the vectorizer.
-    - `save_format`: One of 'npy' or 'h5'.
+    - `save_format`: One of 'npy', 'h5', or 'npz' (sparse matrix storage).
 
     Example usage in notebook:
         cfg = TraditionalFeatureConfig(feature_type='tfidf', ngram_range=(1, 2))
@@ -93,7 +92,7 @@ class TraditionalFeatureConfig:
     feature_type: str = "tfidf"          # 'bow' | 'tfidf' | 'ngram'
     ngram_range: tuple = (1, 1)          # e.g. (1,2) for bigrams
     max_features: Optional[int] = 10_000
-    save_format: str = "npy"             # 'npy' | 'h5'
+    save_format: str = "npy"             # 'npy' | 'h5' | 'npz' (sparse)
     features_dir: str = FEATURES_DIR
 
 

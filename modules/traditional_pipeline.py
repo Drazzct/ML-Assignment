@@ -2,14 +2,14 @@
 Module: Traditional Feature Extraction
 BoW, TF-IDF, and character n-gram feature extraction.
 
-Produces dense numpy arrays and saves them via `feature_io` so they are
-interchangeable with the modern feature extractor outputs.
+Produces sparse feature matrices and saves them via `feature_io`. Sparse
+matrices can be passed directly to scikit-learn estimators.
 """
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
 from modules.config import TraditionalFeatureConfig
-from modules.feature_io import save_features, load_features
+from modules.feature_io import save_features
 
 
 # ──────────────────────────────────────────────
@@ -30,7 +30,26 @@ def _build_vectorizer(config: TraditionalFeatureConfig):
        (Character n-grams capture sub-word patterns.)
     4. Else raise `ValueError`.
     """
-    pass
+    if config.feature_type == "bow":
+        return CountVectorizer(
+            max_features=config.max_features,
+            ngram_range=config.ngram_range,
+        )
+    if config.feature_type == "tfidf":
+        return TfidfVectorizer(
+            max_features=config.max_features,
+            ngram_range=config.ngram_range,
+        )
+    if config.feature_type == "ngram":
+        return TfidfVectorizer(
+            max_features=config.max_features,
+            ngram_range=config.ngram_range,
+            analyzer="char_wb",
+        )
+    raise ValueError(
+        f"Unsupported feature_type {config.feature_type!r}; "
+        "expected 'bow', 'tfidf', or 'ngram'."
+    )
 
 
 # ──────────────────────────────────────────────
@@ -47,26 +66,25 @@ class TraditionalFeatureExtractor:
         2. `self.vectorizer = _build_vectorizer(config)`.
         """
         self.config = config or TraditionalFeatureConfig()
-        self.vectorizer = None
+        self.vectorizer = _build_vectorizer(self.config)
 
     def extract(self, texts, is_train=True):
         """
-        Fits (if train) and transforms texts into a dense numpy array.
+        Fits (if train) and transforms texts into a sparse feature matrix.
 
         Implementation Guide:
         1. If `is_train`: `sparse_matrix = self.vectorizer.fit_transform(texts)`.
         2. Else: `sparse_matrix = self.vectorizer.transform(texts)`.
-        3. Convert to dense: `return sparse_matrix.toarray()`.
-           - Note: If `max_features` is large (>50k) and dataset is big, this may
-             use a lot of RAM.  Consider keeping it at 10k–20k.
 
         Args:
             texts (list[str] | pd.Series): Input texts.
             is_train (bool): Whether to fit the vectorizer.
         Returns:
-            np.ndarray: Dense feature array of shape (N, max_features).
+            scipy.sparse.csr_matrix: Sparse feature matrix of shape (N, D).
         """
-        pass
+        if is_train:
+            return self.vectorizer.fit_transform(texts)
+        return self.vectorizer.transform(texts)
 
     def extract_and_save(self, texts, filename, is_train=True):
         """
@@ -82,6 +100,13 @@ class TraditionalFeatureExtractor:
             filename (str): Base filename (e.g. 'tfidf_train').
             is_train (bool): Whether to fit the vectorizer.
         Returns:
-            np.ndarray: Dense feature array.
+            scipy.sparse.csr_matrix: Sparse feature matrix.
         """
-        pass
+        features = self.extract(texts, is_train=is_train)
+        save_features(
+            features,
+            filename,
+            self.config.features_dir,
+            self.config.save_format,
+        )
+        return features
