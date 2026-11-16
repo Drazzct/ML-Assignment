@@ -53,10 +53,10 @@ def _registry() -> Dict[str, ClassifierSpec]:
         ClassifierSpec("naive_bayes", "naive_bayes", "fast", True, True, True, False,
                        "Multinomial Naive Bayes",
                        lambda rs: MultinomialNB()),
-        ClassifierSpec("knn", "neighbors", "slow", True, True, False, True,
+        ClassifierSpec("knn", "neighbors", "medium", True, True, False, True,
                        "K-Nearest Neighbors (k=5)",
                        lambda rs: KNeighborsClassifier(n_neighbors=5, n_jobs=-1)),
-        ClassifierSpec("mlp", "neural", "medium", True, True, False, True,
+        ClassifierSpec("mlp", "neural", "slow", True, True, False, True,
                        "Multi-Layer Perceptron (128,)",
                        lambda rs: MLPClassifier(hidden_layer_sizes=(128,), max_iter=25, random_state=rs)),
     ]
